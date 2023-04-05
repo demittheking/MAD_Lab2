@@ -7,12 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.content.Context
-import com.example.lab2_dma.R
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import org.greenrobot.eventbus.EventBus
+import com.example.mad_lab2.FragmentChangeEvent
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 /**
  * A simple [Fragment] subclass.
@@ -23,18 +21,26 @@ private const val ARG_PARAM2 = "param2"
 interface OnButtonClickListener {
     fun onButtonClicked()
 }
+
 class MainFragment : Fragment() {
-    // TODO: Rename and change types of parameters
     private lateinit var button: Button
-    private var param1: String? = null
-    private var param2: String? = null
+    lateinit var btn_fragment1: Button
+    lateinit var btn_fragment2: Button
+    lateinit var btn_fragment3: Button
     private var onButtonClickListener: OnButtonClickListener? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+        EventBus.getDefault().register(this)
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onFragmentChange(event: FragmentChangeEvent) {
+        val fragmentClass = event.fragmentClass
+        val fragment = fragmentClass.newInstance()
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack(null)
+            .commit()
     }
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -44,14 +50,6 @@ class MainFragment : Fragment() {
         super.onDetach()
         onButtonClickListener = null
     }
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        button = view.findViewById(R.id.button)
-        button.setOnClickListener {
-            onButtonClickListener?.onButtonClicked()
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -60,23 +58,23 @@ class MainFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_main, container, false)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BlankFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MainFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        button = view.findViewById(R.id.button)
+        button.setOnClickListener {
+            onButtonClickListener?.onButtonClicked()
+        }
+        btn_fragment1 = view.findViewById(R.id.btn_fragment1)
+        btn_fragment2 = view.findViewById(R.id.btn_fragment2)
+        btn_fragment3 = view.findViewById(R.id.btn_fragment3)
+        btn_fragment1.setOnClickListener {
+            EventBus.getDefault().post(FragmentChangeEvent(BlankFragment1::class.java))
+        }
+        btn_fragment2.setOnClickListener {
+            EventBus.getDefault().post(FragmentChangeEvent(BlankFragment2::class.java))
+        }
+        btn_fragment3.setOnClickListener {
+            EventBus.getDefault().post(FragmentChangeEvent(BlankFragment3::class.java))
+        }
     }
 }
